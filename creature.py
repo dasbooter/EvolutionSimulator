@@ -20,8 +20,8 @@ class CreatureDNA:
         self.prioritization = self.random_attribute()
 
         # Reproduction and Energy Attributes
-        self.reproduction_energy_threshold = self.random_attribute_and_value()[1]
-        self.reproduction_cost = self.random_attribute_and_value()[1]
+        self.reproduction_energy_threshold = random.randint(150, 255)
+        self.reproduction_cost = random.randint(100, 200)
         self.energy_loss_rate = self.random_attribute_and_value()[1]
         self.max_age = self.random_attribute_and_value()[1]
 

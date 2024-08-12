@@ -13,7 +13,7 @@ running = True
 # Population and food settings
 population = 25
 initial_food = 10
-food_generation_rate = 0.1  # Per frame
+food_generation_rate = 0.75  # Per frame
 creature_radius = 5 
 
 creatures = []
@@ -60,28 +60,36 @@ def avoid_collision(pos, creature_radius, quadtree):
                 pos += direction * (2 * creature_radius - distance)
     return pos
 
+def mutate_attribute(parent_value, mutation_chance, mutation_range=(-10, 10)):
+    """Mutate an attribute with a given chance and range."""
+    if random.random() < mutation_chance:
+        return max(0, min(255, parent_value + random.randint(*mutation_range)))
+    return parent_value
+
 def reproduce(creature, creatures, creature_radius):
-    # Offspring inherits DNA with potential mutation
     parent_dna = creature["dna"]
     new_dna = CreatureDNA()
 
-    # Mutate attributes with a small chance
-    mutation_chance = 0.05
-    if random.random() < mutation_chance:
-        new_dna.speed = max(0, min(255, parent_dna.speed + random.randint(-10, 10)))
-    else:
-        new_dna.speed = parent_dna.speed
+    mutation_chance = 0.01  # 1% chance for mutation
+    other_mutation_chance = 0.05  # Lower chance for other attributes
 
-    # Inherit reproduction attributes with possible mutation
+    # Mutate attack, health, and defense attributes
+    for attr in ['attack', 'health', 'defense']:
+        setattr(new_dna, attr, mutate_attribute(getattr(parent_dna, attr), mutation_chance))
+        setattr(new_dna, f'{attr}_rgb', getattr(parent_dna, f'{attr}_rgb'))
+
+    # Mutate other attributes with a small chance
+    new_dna.speed = mutate_attribute(parent_dna.speed, other_mutation_chance)
+
     for attr in ['reproduction_energy_threshold', 'reproduction_cost', 'energy_loss_rate', 'max_age']:
-        setattr(new_dna, attr, max(0, min(255, getattr(parent_dna, attr) + random.randint(-5, 5))))
+        setattr(new_dna, attr, mutate_attribute(getattr(parent_dna, attr), other_mutation_chance, mutation_range=(-5, 5)))
 
     # Place the offspring near the parent but not overlapping
     offset = np.random.normal(0, 10, 2)
     new_pos = creature["pos"] + offset
     color = (new_dna.attack, new_dna.health, new_dna.defense)
     creatures.append({"pos": new_pos, "dna": new_dna, "color": color, "energy": 50, "age": 0})
-    
+   
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
